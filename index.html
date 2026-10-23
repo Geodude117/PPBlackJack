@@ -48,10 +48,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
 svg{display:block}
+.rotate-hint{display:none}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse){
+  .rotate-hint{display:flex;position:fixed;inset:0;z-index:90;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:var(--felt);color:var(--gold-hi);font:800 18px/1.3 var(--font-round);text-align:center;padding:24px}
+  .rotate-hint small{font:500 13px/1.4 var(--font-ui);color:rgba(255,255,255,.6)}
+}
 .no-anim *,.no-anim *::before,.no-anim *::after{transition-duration:0s!important;animation-duration:0s!important;animation-delay:0s!important}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
-#app{position:relative;max-width:460px;min-height:100%;margin:0 auto;display:flex;flex-direction:column;
+#app{position:relative;max-width:460px;min-height:100%;width:100%;box-sizing:border-box;margin:0 auto;display:flex;flex-direction:column;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 10px;box-sizing:border-box}
 
 /* table watermark + rule text */
@@ -350,6 +355,7 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
   <div class="layer adwrap" id="adwrap" hidden><span class="adlabel">Advertisement</span></div>
   <footer class="layer sitefoot">Play money only · <a href="privacy.html">Privacy Policy</a></footer>
 </div>
+<div class="rotate-hint" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Turn your phone upright<small>Perfect Pair Blackjack is made for portrait</small></div>
 <div id="overlays"></div>
 <div id="sheet"></div>
 
@@ -909,6 +915,8 @@ function loadAds() {
     if (BANNER_TEST) ins.setAttribute('data-adtest', 'on');
     wrap.appendChild(ins); wrap.hidden = false;
     try { window.adsbygoogle.push({}); } catch (e) {}
+    // ad blocked or script failed: Google sets adsbygoogle.loaded once its script runs
+    setTimeout(() => { if (!window.adsbygoogle || window.adsbygoogle.loaded !== true) wrap.hidden = true; }, 6000);
   }
 }
 function watchAd() {
@@ -1365,7 +1373,27 @@ function attachDrag(slot) {
   slot.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); S.selectedChip = value; renderTray(); if (S.phase === 'betting') addChip(value, 0); } });
 }
 
-/* boot */
+/* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
+   screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
+   laptops get a bigger table. The ad and footer sit just below the fold. */
+const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
+function fitToScreen() {
+  const app = $('app'), cs = getComputedStyle(document.documentElement);
+  const vw = document.documentElement.clientWidth;
+  const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  let z = Math.min(vw / DESIGN_W, vh / DESIGN_H);
+  z = Math.max(MIN_Z, Math.min(MAX_Z, z));
+  if (vw < 500) z = Math.min(z, vw / 360);            // never wider than a phone screen
+  z = Math.round(z * 1000) / 1000;
+  app.style.zoom = z;
+  app.style.minHeight = (vh / z) + 'px';
+  document.documentElement.style.setProperty('--z', z);
+}
+if (CSS.supports('zoom', '1')) {
+  fitToScreen();
+  window.addEventListener('resize', fitToScreen);
+  window.visualViewport && window.visualViewport.addEventListener('resize', fitToScreen);
+}
 loadAds();
 generateLuckyPair(false);
 render();
