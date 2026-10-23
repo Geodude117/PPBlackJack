@@ -218,10 +218,9 @@ body:not([data-phase=betting]) .tray,body:not([data-phase=betting]) .bonus{displ
 .sitefoot a{color:rgba(242,209,89,.75)}
 .privbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:11px;background:var(--gold-hi);color:#000;font-size:15px;font-weight:700;text-decoration:none}
 .privbtn.sec{margin-top:10px;background:transparent;color:var(--gold-hi);border:1.5px solid rgba(242,209,89,.55)}
-.adwrap{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.adwrap{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .adwrap .adlabel{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35)}
-.adwrap ins.adsbygoogle{display:block;width:100%;height:100px;background:transparent}
-@media (min-width:500px){.adwrap ins.adsbygoogle{height:90px}}
+.adwrap ins.adsbygoogle{display:block;width:100%;min-height:100px;background:transparent}
 .adwrap:has(ins.adsbygoogle[data-ad-status="unfilled"]){display:none}
 .pack.ad{border-color:rgba(242,209,89,.6);background:rgba(242,209,89,.08)}
 .pack:disabled{opacity:.45;cursor:default}
@@ -881,7 +880,8 @@ const ADSENSE_CLIENT = 'ca-pub-8138187958283309';
 const AD_TEST = true;
 const AD_REWARD = 500;
 // Banner under the table: create a "Display ad" unit in AdSense and paste its data-ad-slot number here, e.g. '1234567890'.
-const ADSENSE_BANNER_SLOT = '';
+const ADSENSE_BANNER_SLOT = '1229213300';
+const BANNER_TEST = false;   // real ads in the banner (never click your own ads)
 let adBusy = false, adPlaying = false, noticeTimer = null;
 function notice(t, sub) { S.notice = { t, s: sub }; render(); clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { S.notice = null; render(); }, 2600); }
 function loadAds() {
@@ -901,12 +901,12 @@ function loadAds() {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
   if (ADSENSE_BANNER_SLOT) {
     const wrap = $('adwrap'), ins = document.createElement('ins');
-    ins.className = 'adsbygoogle';
+    ins.className = 'adsbygoogle'; ins.style.display = 'block';
     ins.setAttribute('data-ad-client', ADSENSE_CLIENT);
     ins.setAttribute('data-ad-slot', ADSENSE_BANNER_SLOT);
-    ins.setAttribute('data-ad-format', 'horizontal');
+    ins.setAttribute('data-ad-format', 'auto');
     ins.setAttribute('data-full-width-responsive', 'true');
-    if (AD_TEST) ins.setAttribute('data-adtest', 'on');
+    if (BANNER_TEST) ins.setAttribute('data-adtest', 'on');
     wrap.appendChild(ins); wrap.hidden = false;
     try { window.adsbygoogle.push({}); } catch (e) {}
   }
