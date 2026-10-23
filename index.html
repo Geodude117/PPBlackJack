@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Perfect Pair Blackjack: play-money blackjack with Perfect Pairs and 21+3 side bets and a 500:1 Lucky Pair jackpot.">
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8138187958283309"
+     crossorigin="anonymous"></script>
 <meta name="theme-color" content="#0d4220">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/AppIcon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/AppIcon-16.png">
@@ -211,6 +214,10 @@ body:not([data-phase=betting]) .tray,body:not([data-phase=betting]) .bonus{displ
 .bonus{display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border-radius:10px;background:var(--gold-hi);color:#000;font-size:13px;font-weight:700;box-sizing:border-box}
 .bonus .grow{flex:1;text-align:left}
 .bonus:disabled{background:#383838;color:rgba(255,255,255,.4);cursor:default}
+.sitefoot{margin-top:10px;text-align:center;font-size:11px;color:rgba(255,255,255,.4)}
+.sitefoot a{color:rgba(242,209,89,.75)}
+.privbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:11px;background:var(--gold-hi);color:#000;font-size:15px;font-weight:700;text-decoration:none}
+.privbtn.sec{margin-top:10px;background:transparent;color:var(--gold-hi);border:1.5px solid rgba(242,209,89,.55)}
 .adwrap{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .adwrap .adlabel{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35)}
 .adwrap ins.adsbygoogle{display:block;width:100%;height:100px;background:transparent}
@@ -342,6 +349,7 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
     <button class="bonus" data-act="watch-ad" id="adbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 8.5v7l6-3.5z" fill="#f2d159"/></svg><span class="grow" id="adlbl">Watch Ad · +500 Coins</span><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="#f2d159" stroke-width="2.4" stroke-linecap="round"/></svg></button>
   </div>
   <div class="layer adwrap" id="adwrap" hidden><span class="adlabel">Advertisement</span></div>
+  <footer class="layer sitefoot">Play money only · <a href="privacy.html">Privacy Policy</a></footer>
 </div>
 <div id="overlays"></div>
 <div id="sheet"></div>
@@ -869,7 +877,7 @@ function sparkles() {
 /* ───────── rewarded ads (Google H5 Games Ads / Ad Placement API) ─────────
    Paste your AdSense publisher ID below once your site is approved, e.g. 'ca-pub-1234567890123456'.
    Leave AD_TEST true while testing (Google serves test ads); set it to false to earn. */
-const ADSENSE_CLIENT = '';
+const ADSENSE_CLIENT = 'ca-pub-8138187958283309';
 const AD_TEST = true;
 const AD_REWARD = 500;
 // Banner under the table: create a "Display ad" unit in AdSense and paste its data-ad-slot number here, e.g. '1234567890'.
@@ -880,12 +888,16 @@ function loadAds() {
   if (!ADSENSE_CLIENT) return;
   window.adsbygoogle = window.adsbygoogle || [];
   window.adBreak = window.adConfig = o => window.adsbygoogle.push(o);
+  const existing = document.querySelector('script[src*="adsbygoogle.js"]');   // site-verification tag already in <head>
+  if (existing) { if (AD_TEST) existing.setAttribute('data-adbreak-test', 'on'); }
+  else {
   const sc = document.createElement('script');
   sc.async = true; sc.crossOrigin = 'anonymous';
   sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ADSENSE_CLIENT);
   sc.setAttribute('data-ad-client', ADSENSE_CLIENT);
   if (AD_TEST) sc.setAttribute('data-adbreak-test', 'on');
   document.head.appendChild(sc);
+  }
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
   if (ADSENSE_BANNER_SLOT) {
     const wrap = $('adwrap'), ins = document.createElement('ins');
@@ -902,7 +914,9 @@ function loadAds() {
 function watchAd() {
   if (adBusy) return;
   if (!window.adBreak) return notice('Ads aren’t switched on yet', 'Check back soon for bonus coins');
-  adBusy = true; let offered = false; render();
+  adBusy = true; let offered = false, finished = false; render();
+  // ad blockers stop Google's script from ever answering; give up after 8s so the button doesn't hang
+  const guard = setTimeout(() => { if (!finished && !adPlaying) { finished = true; adBusy = false; notice('No ad available right now', 'Try again in a minute'); render(); } }, 8000);
   window.adBreak({
     type: 'reward', name: 'bonus_coins',
     beforeAd() { adPlaying = true; },
@@ -911,11 +925,19 @@ function watchAd() {
     adDismissed() { notice('Ad closed early', 'Watch to the end to get the coins'); },
     adViewed() { addChips(AD_REWARD); notice(`+${AD_REWARD} coins added`, 'Thanks for watching'); },
     adBreakDone(info) {
+      clearTimeout(guard); if (finished) return; finished = true;
       adBusy = false; adPlaying = false;
       if (!offered) notice('No ad available right now', 'Try again in a minute');
       render();
     }
   });
+}
+// Re-open Google's consent message (Funding Choices) so players can change their ad/cookie choice
+function openCookieSettings() {
+  const fc = window.googlefc;
+  if (!ADSENSE_CLIENT || !fc) return notice('Cookie settings aren\u2019t available yet', 'They appear once ads are switched on');
+  fc.callbackQueue = fc.callbackQueue || [];
+  fc.callbackQueue.push({ CONSENT_API_READY: () => { S.sheet = null; render(); fc.showRevocationMessage(); } });
 }
 let fundsTimer = null;
 function triggerInsufficient() {
@@ -1206,6 +1228,11 @@ function sheetHTML() {
         </div>
         <div class="sect">HOUSE RULES</div><div class="group"><div class="srow" style="display:block">${rule('Dealer hits soft 17')}${rule('Blackjack pays 3:2')}${rule('Insurance pays 2:1')}${rule('Split up to 4 hands')}${rule('Double on any 2 cards')}</div></div>
         <div class="sect">KEYBOARD</div><div class="group"><div class="srow kbd" style="display:block"><b>H</b>Hit &nbsp; <b>S</b>Stand &nbsp; <b>D</b>Double &nbsp; <b>P</b>Split<br><b>Enter</b>Deal &nbsp; <b>R</b>Rebet &nbsp; <b>1–4</b>Pick chip</div></div>
+        <div class="sect">PRIVACY</div><div class="group privgrp">
+          <div class="srow" style="display:block"><div class="ds" style="margin:0 0 12px;font-size:12px">How your data, cookies and ads are handled on this site.</div>
+          <a class="privbtn" href="privacy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke-linecap="round"/></svg>View Privacy Policy</a>
+          <button class="privbtn sec" data-act="cookie-settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zM8 10.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 .5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>Cookie &amp; Ad Settings</button></div>
+        </div>
         <div class="sect">ABOUT</div><div class="group"><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">1.0 web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div></div>`);
     }
     case 'store': {
@@ -1262,6 +1289,7 @@ document.addEventListener('click', e => {
     case 'warn-no': return dismissWarning();
     case 'claim': S.bigWin = null; return newRound();
     case 'watch-ad': return watchAd();
+    case 'cookie-settings': return openCookieSettings();
     case 'store': case 'history': case 'settings': S.sheet = a; return render();
     case 'close': S.sheet = null; return render();
     case 'close-bg': if (e.target === t) { S.sheet = null; render(); } return;
