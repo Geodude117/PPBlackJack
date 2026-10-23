@@ -217,6 +217,8 @@ body:not([data-phase=betting]) .tray,body:not([data-phase=betting]) .bonus{displ
 .sitefoot{margin-top:10px;text-align:center;font-size:11px;color:rgba(255,255,255,.4)}
 .sitefoot a{color:rgba(242,209,89,.75)}
 .srow a.pl{color:var(--gold-hi);text-decoration:none;font-size:14px}
+.privbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:11px;background:var(--gold-hi);color:#000;font-size:15px;font-weight:700;text-decoration:none}
+.privbtn.sec{margin-top:10px;background:transparent;color:var(--gold-hi);border:1.5px solid rgba(242,209,89,.55)}
 .adwrap{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .adwrap .adlabel{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35)}
 .adwrap ins.adsbygoogle{display:block;width:100%;height:100px;background:transparent}
@@ -931,6 +933,13 @@ function watchAd() {
     }
   });
 }
+// Re-open Google's consent message (Funding Choices) so players can change their ad/cookie choice
+function openCookieSettings() {
+  const fc = window.googlefc;
+  if (!ADSENSE_CLIENT || !fc) return notice('Cookie settings aren\u2019t available yet', 'They appear once ads are switched on');
+  fc.callbackQueue = fc.callbackQueue || [];
+  fc.callbackQueue.push({ CONSENT_API_READY: () => { S.sheet = null; render(); fc.showRevocationMessage(); } });
+}
 let fundsTimer = null;
 function triggerInsufficient() {
   if (S.insufficient) return; haptic(H.medium); S.insufficient = true; render();
@@ -1220,7 +1229,12 @@ function sheetHTML() {
         </div>
         <div class="sect">HOUSE RULES</div><div class="group"><div class="srow" style="display:block">${rule('Dealer hits soft 17')}${rule('Blackjack pays 3:2')}${rule('Insurance pays 2:1')}${rule('Split up to 4 hands')}${rule('Double on any 2 cards')}</div></div>
         <div class="sect">KEYBOARD</div><div class="group"><div class="srow kbd" style="display:block"><b>H</b>Hit &nbsp; <b>S</b>Stand &nbsp; <b>D</b>Double &nbsp; <b>P</b>Split<br><b>Enter</b>Deal &nbsp; <b>R</b>Rebet &nbsp; <b>1–4</b>Pick chip</div></div>
-        <div class="sect">ABOUT</div><div class="group"><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">1.0 web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div><div class="srow"><div class="g nm">Privacy</div><a class="pl" href="privacy.html">Privacy Policy ›</a></div></div>`);
+        <div class="sect">PRIVACY</div><div class="group privgrp">
+          <div class="srow" style="display:block"><div class="ds" style="margin:0 0 12px;font-size:12px">How your data, cookies and ads are handled on this site.</div>
+          <a class="privbtn" href="privacy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke-linecap="round"/></svg>View Privacy Policy</a>
+          <button class="privbtn sec" data-act="cookie-settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zM8 10.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 .5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>Cookie &amp; Ad Settings</button></div>
+        </div>
+        <div class="sect">ABOUT</div><div class="group"><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">1.0 web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div></div>`);
     }
     case 'store': {
       const broke = S.balance + totalBet() < 25;
@@ -1276,6 +1290,7 @@ document.addEventListener('click', e => {
     case 'warn-no': return dismissWarning();
     case 'claim': S.bigWin = null; return newRound();
     case 'watch-ad': return watchAd();
+    case 'cookie-settings': return openCookieSettings();
     case 'store': case 'history': case 'settings': S.sheet = a; return render();
     case 'close': S.sheet = null; return render();
     case 'close-bg': if (e.target === t) { S.sheet = null; render(); } return;
