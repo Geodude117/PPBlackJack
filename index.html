@@ -220,6 +220,7 @@ body:not([data-phase=betting]) .tray,body:not([data-phase=betting]) .bonus{displ
 .phand .hl{font-size:10px;font-weight:600;color:rgba(255,255,255,.5)} .phand .hl.on{color:var(--yellow)}
 
 /* action buttons */
+#actions{transition:opacity .2s}
 .actions{display:flex;flex-direction:column;align-items:center;gap:8px;margin:4px 0;animation:slideUp .22s ease-out both}
 @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .row{display:flex;gap:8px;justify-content:center}
@@ -835,6 +836,7 @@ async function deal() {
   await step(S.dealer, true);
   for (const h of S.hands) await step(h, true);
   await step(S.dealer, false);
+  await waitForReveal();
   S.animating = false;
   await postDealChecks();
 }
@@ -868,33 +870,40 @@ function checkCurrent() {
   else if (bestValue(h) === 21) { h.hasActed = true; advance(); }
   else S.message = `${S.hands.length > 1 ? `Hand ${S.idx + 1}: ` : ''}Your move (${bestValue(h)})`;
 }
-function hit() {
-  const h = currentHand(); if (S.phase !== 'playerTurn' || !h || h.hasActed) return;
-  h.cards.push(shoe.deal(true)); haptic(H.light); play('card');
+let busy = false;   // a card is being dealt to the player: buttons wait
+async function hit() {
+  const h = currentHand(); if (S.phase !== 'playerTurn' || !h || h.hasActed || busy) return;
+  busy = true;
+  h.cards.push(shoe.deal(true)); haptic(H.light); play('card'); render();
+  await waitForReveal(); busy = false;
   const v = bestValue(h);
   if (isBust(h)) { S.message = 'Bust!'; h.hasActed = true; haptic(H.heavy); advance(); }
   else if (v === 21) { h.hasActed = true; advance(); }
   else S.message = `Value: ${v}`;
   render();
 }
-function stand() { const h = currentHand(); if (S.phase !== 'playerTurn' || !h || h.hasActed) return; h.hasActed = true; haptic(H.medium); advance(); render(); }
-function doubleDown() {
-  const h = currentHand(); if (S.phase !== 'playerTurn' || !h || !canDouble(h)) return;
+function stand() { const h = currentHand(); if (S.phase !== 'playerTurn' || !h || h.hasActed || busy) return; h.hasActed = true; haptic(H.medium); advance(); render(); }
+async function doubleDown() {
+  const h = currentHand(); if (S.phase !== 'playerTurn' || !h || !canDouble(h) || busy) return;
   if (S.balance < h.bet) return triggerInsufficient();
+  busy = true;
   S.balance -= h.bet; h.bet *= 2; h.isDoubled = true; h.cards.push(shoe.deal(true)); h.hasActed = true;
-  haptic(H.medium); play('card');
+  haptic(H.medium); play('card'); render();
+  await waitForReveal(); busy = false;
   if (isBust(h)) { S.message = 'Double — Bust!'; haptic(H.heavy); }
   advance(); render();
 }
-function split() {
-  const h = currentHand(); if (S.phase !== 'playerTurn' || !h || !canSplit(h) || S.hands.length >= 4) return;
+async function split() {
+  const h = currentHand(); if (S.phase !== 'playerTurn' || !h || !canSplit(h) || S.hands.length >= 4 || busy) return;
   if (S.balance < h.bet) return triggerInsufficient();
+  busy = true;
   S.balance -= h.bet;
   const nh = newHand(h.bet); nh.isSplit = true; h.isSplit = true;
   nh.cards.push(h.cards.pop());
   h.cards.push(shoe.deal(true)); nh.cards.push(shoe.deal(true));
   S.hands.splice(S.idx + 1, 0, nh);
-  haptic(H.medium); play('card'); activate();
+  haptic(H.medium); play('card'); activate(); render();
+  await waitForReveal(); busy = false;
   if (h.cards[0].rank === 14) { h.hasActed = true; nh.hasActed = true; advance(); }  // split Aces get one card each
   else checkCurrent();
   render();
@@ -908,7 +917,7 @@ function advance() {
 /* dealer */
 async function flipHole() {
   const c = S.dealer.cards.find(c => !c.faceUp);
-  if (c) { await sleep(600); c.faceUp = true; play('card'); render(); await sleep(settings.anim ? 1000 : 600); S.dealerValueVisible = true; render(); }
+  if (c) { await sleep(600); c.faceUp = true; play('card'); render(); await waitForReveal(); if (!settings.anim) await sleep(600); S.dealerValueVisible = true; render(); }
 }
 async function revealAndFinish() { S.phase = 'dealerTurn'; render(); await flipHole(); await settleRound(); }
 let dealerRunning = false;
@@ -919,7 +928,8 @@ async function startDealerTurn() {
   const needs = S.hands.some(h => !isBust(h) && !h.surrendered && !isBlackjack(h));
   if (needs) {
     while (bestValue(S.dealer) < 17 || (bestValue(S.dealer) === 17 && isSoft(S.dealer))) {
-      await sleep(settings.anim ? speed(1100) : speed(650)); S.dealer.cards.push(shoe.deal(true)); play('card'); render();
+      await sleep(settings.anim ? speed(450) : speed(650)); S.dealer.cards.push(shoe.deal(true)); play('card'); render();
+      await waitForReveal();
     }
   }
   await sleep(400);
@@ -1039,6 +1049,7 @@ function evaluateSideBetsEarly() {
 }
 
 function newRound() {
+  shown.clear(); revealed.clear(); pendingFlips = 0; busy = false;
   S.chipHistory = []; S.resultToast = null; S.bigWin = null; S.phase = 'betting'; S.dealer = newHand(); S.results = {};
   S.showInsurance = false; S.showSideBet = false; S.sideBetMessage = ''; S.dealerValueVisible = false; S.idx = 0;
   S.ppToast = null; S.ppSettled = 0; S.t21Toast = null; S.t21Settled = 0;
@@ -1175,12 +1186,24 @@ function cardEl(card, w, h) {
   return el;
 }
 const revealed = new Set();   // cards already shown face-up (e.g. the card moved by a split) don't animate again
+const shown = new Set();      // cards whose turn-over has finished: totals only count these
+let pendingFlips = 0;
 function turnOver(el) {
-  revealed.add(el.dataset.id);
-  if (!settings.anim) { el.classList.add('up'); return; }
+  const id = el.dataset.id;
+  revealed.add(id);
+  if (!settings.anim) { el.classList.add('up'); shown.add(id); return; }
   el.classList.add('flipping');
-  setTimeout(() => { el.classList.add('up'); el.classList.remove('flipping'); }, 920);
+  setTimeout(() => { el.classList.add('up'); el.classList.remove('flipping'); shown.add(id); pendingFlips = Math.max(0, pendingFlips - 1); render(); }, 920);
 }
+// resolves once every card on the table has finished turning over
+function waitForReveal() {
+  return new Promise(res => {
+    const t0 = Date.now();
+    (function check() { if (pendingFlips === 0 || Date.now() - t0 > 4000) { pendingFlips = 0; res(); } else setTimeout(check, 40); })();
+  });
+}
+// what the player can see: face-down or still-turning cards don't count yet
+const visibleHand = h => ({ ...h, cards: h.cards.filter(c => c.faceUp && (shown.has(c.id) || !settings.anim)) });
 function reconcileCards(container, hand, w, h) {
   container.style.width = (w + Math.max(hand.cards.length - 1, 0) * w * .45) + 'px';
   container.style.height = h + 'px';
@@ -1192,9 +1215,10 @@ function reconcileCards(container, hand, w, h) {
       el = cardEl(card, w, h);
       if (revealed.has(card.id)) el.classList.add('up', 'nodeal');
       container.appendChild(el);
-      if (card.faceUp && !revealed.has(card.id)) setTimeout(() => turnOver(el), settings.anim ? 560 : 0);
+      if (card.faceUp && !revealed.has(card.id)) { if (settings.anim) pendingFlips++; setTimeout(() => turnOver(el), settings.anim ? 560 : 0); }
+      else if (revealed.has(card.id)) shown.add(card.id);
       el._up = card.faceUp;
-    } else if (el._up !== card.faceUp) { el._up = card.faceUp; if (card.faceUp) turnOver(el); else el.classList.remove('up'); }
+    } else if (el._up !== card.faceUp) { el._up = card.faceUp; if (card.faceUp) { if (settings.anim) pendingFlips++; turnOver(el); } else el.classList.remove('up'); }
     el.style.cssText = `left:${i * w * .45}px;width:${w}px;height:${h}px;--cw:${w}px;z-index:${i}`;
     el.setAttribute('aria-label', card.faceUp ? `${rankDisplay(card.rank)} of ${SUITS[card.suit].k}` : 'face-down card');
     keep.add(card.id);
@@ -1203,6 +1227,7 @@ function reconcileCards(container, hand, w, h) {
 }
 function handMeta(hand, showValue, active, result) {
   let s = '';
+  hand = visibleHand(hand);
   if (showValue && hand.cards.length) {
     const v = bestValue(hand), bust = isBust(hand);
     s += `<div class="valpill${active ? ' active' : ''}"><span class="v${bust ? ' bust' : ''}">${v}</span>${isSoft(hand) && !bust && v < 21 ? '<span class="soft">soft</span>' : ''}${isBlackjack(hand) ? '<span class="bj">BJ!</span>' : ''}</div>`;
@@ -1260,7 +1285,8 @@ function renderLucky() {
     (S.luckySpinning ? ICON.spin(11) : '<span class="note">matches Perfect Pair for 500:1</span>'));
 }
 function renderActions() {
-  if (S.phase !== 'playerTurn') { setHTML($('actions'), ''); return; }
+  if (S.phase !== 'playerTurn' || busy) { setHTML($('actions'), S.phase === 'playerTurn' ? $('actions')._h || '' : ''); if (busy) { $('actions').style.pointerEvents = 'none'; $('actions').style.opacity = '.55'; } return; }
+  $('actions').style.pointerEvents = ''; $('actions').style.opacity = '';
   const h = currentHand(), hint = strategyHint();
   const col = { good: '#1aa64d', caution: '#d98c1a', danger: '#d92626' };
   const hintIcon = hint ? (hint.level === 'danger' ? ICON.warn(11) : hint.level === 'caution' ? ICON.bulb(11) : ICON.check(11)) : '';
@@ -1589,7 +1615,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.1.3';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
