@@ -1551,7 +1551,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
@@ -1560,7 +1560,7 @@ function fitToScreen() {
   let z;
   if (vw < 500) {
     // phones: fill the width at full size; the page scrolls to reach the bottom of the panel and the guide
-    z = Math.max(0.9, Math.min(1.2, vw / 372));
+    z = Math.max(0.9, Math.min(1.2, vw / DESIGN_W));   // 1:1 on a 390-wide iPhone, proportional on others
   } else {
     z = Math.max(MIN_Z, Math.min(MAX_Z, Math.min(vw / DESIGN_W, vh / DESIGN_H)));
   }
