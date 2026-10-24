@@ -165,10 +165,16 @@ svg{display:block}
 .placeholder{width:62px;height:90px;border-radius:9px;border:1.5px dashed rgba(255,255,255,.12)}
 .handview{display:flex;flex-direction:column;align-items:center;gap:6px}
 .cards{position:relative;transition:width .3s}
-.card{position:absolute;top:0;perspective:600px;animation:dealIn .35s cubic-bezier(.3,1.4,.5,1) both;transition:left .3s}
-@keyframes dealIn{from{transform:translateY(-30px) scale(.5);opacity:0}to{transform:none;opacity:1}}
-.card .inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .45s ease-in-out}
-.card.up .inner{transform:rotateY(180deg)}
+.card{position:absolute;top:0;animation:dealIn .38s cubic-bezier(.2,.8,.3,1) both;transition:left .3s}
+/* cards fly in face-down from the shoe (top right), then turn over */
+@keyframes dealIn{from{transform:translate(160px,var(--dy,-90px)) rotate(-14deg) scale(.72);opacity:0}60%{opacity:1}to{transform:none;opacity:1}}
+.card .inner{position:relative;width:100%;height:100%;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;transform:perspective(700px) rotateY(0deg)}
+.card.up .inner{transform:perspective(700px) rotateY(180deg)}
+.card.flipping .inner{animation:cardTurn .52s cubic-bezier(.35,.1,.25,1) both}
+.card.flipping{z-index:50!important}
+.card.nodeal{animation:none}
+@keyframes cardTurn{0%{transform:perspective(700px) rotateY(0deg) scale(1)}45%{transform:perspective(700px) rotateY(85deg) scale(1.14) translateY(-6px)}100%{transform:perspective(700px) rotateY(180deg) scale(1)}}
+.card.flipping .face{box-shadow:4px 10px 16px rgba(0,0,0,.45)}
 .face{position:absolute;inset:0;border-radius:9px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:2px 3px 5px rgba(0,0,0,.35)}
 .cback{background:linear-gradient(135deg,#8c1414,#590a0a);overflow:hidden}
 .cback::before{content:"";position:absolute;inset:5px;border-radius:7px;border:1.5px solid rgba(255,255,255,.25);
@@ -1152,6 +1158,13 @@ function cardEl(card, w, h) {
   el.setAttribute('role', 'img');
   return el;
 }
+const revealed = new Set();   // cards already shown face-up (e.g. the card moved by a split) don't animate again
+function turnOver(el) {
+  revealed.add(el.dataset.id);
+  if (!settings.anim) { el.classList.add('up'); return; }
+  el.classList.add('flipping');
+  setTimeout(() => { el.classList.add('up'); el.classList.remove('flipping'); }, 530);
+}
 function reconcileCards(container, hand, w, h) {
   container.style.width = (w + Math.max(hand.cards.length - 1, 0) * w * .45) + 'px';
   container.style.height = h + 'px';
@@ -1160,10 +1173,12 @@ function reconcileCards(container, hand, w, h) {
   hand.cards.forEach((card, i) => {
     let el = existing.get(card.id);
     if (!el) {
-      el = cardEl(card, w, h); container.appendChild(el);
-      if (card.faceUp) setTimeout(() => el.classList.add('up'), settings.anim ? 200 : 0);
+      el = cardEl(card, w, h);
+      if (revealed.has(card.id)) el.classList.add('up', 'nodeal');
+      container.appendChild(el);
+      if (card.faceUp && !revealed.has(card.id)) setTimeout(() => turnOver(el), settings.anim ? 300 : 0);
       el._up = card.faceUp;
-    } else if (el._up !== card.faceUp) { el._up = card.faceUp; el.classList.toggle('up', card.faceUp); }
+    } else if (el._up !== card.faceUp) { el._up = card.faceUp; if (card.faceUp) turnOver(el); else el.classList.remove('up'); }
     el.style.cssText = `left:${i * w * .45}px;width:${w}px;height:${h}px;--cw:${w}px;z-index:${i}`;
     el.setAttribute('aria-label', card.faceUp ? `${rankDisplay(card.rank)} of ${SUITS[card.suit].k}` : 'face-down card');
     keep.add(card.id);
@@ -1195,7 +1210,8 @@ function renderDealer() {
   if (!S.dealer.cards.length) { setHTML(box, '<div class="placeholder"></div>'); return; }
   if (box._h) { box.innerHTML = ''; box._h = ''; }
   const hv = ensureHandView(box, 'dealer');
-  reconcileCards(hv.querySelector('.cards'), S.dealer, 62, 90);
+  const dc = hv.querySelector('.cards'); dc.style.setProperty('--dy', '-70px');
+  reconcileCards(dc, S.dealer, 62, 90);
   setHTML(hv.querySelector('.meta'), handMeta(S.dealer, S.dealerValueVisible, S.phase === 'dealerTurn', null));
 }
 function renderPlayers() {
@@ -1217,7 +1233,8 @@ function renderPlayers() {
     const hl = el.querySelector('.hl');
     hl.hidden = S.hands.length <= 1; hl.textContent = `Hand ${i + 1}`; hl.classList.toggle('on', hand.isActive);
     const hv = ensureHandView(el, 'h');
-    reconcileCards(hv.querySelector('.cards'), hand, w, h);
+    const pc = hv.querySelector('.cards'); pc.style.setProperty('--dy', '-300px');
+    reconcileCards(pc, hand, w, h);
     setHTML(hv.querySelector('.meta'), handMeta(hand, S.phase !== 'betting', hand.isActive, S.results[hand.id]));
   });
   for (const el of existing.values()) el.remove();
@@ -1551,7 +1568,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.3';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
