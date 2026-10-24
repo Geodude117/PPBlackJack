@@ -323,6 +323,13 @@ body:not([data-phase=betting]) .tray,body:not([data-phase=betting]) .bonus{displ
 .seo ul.guides a{color:var(--gold-hi)}
 .sitefoot{margin-top:10px;text-align:center;font-size:11px;color:rgba(255,255,255,.4)}
 .sitefoot a{color:rgba(242,209,89,.75)}
+.guide{display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:#fff}
+.guide + .guide{border-top:1px solid rgba(255,255,255,.06)}
+.guide .gi{flex:none;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font:900 12px/1 var(--font-round);color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.guide .g{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.guide .nm{font-size:15px;font-weight:600} .guide .ds{font-size:11px;color:rgba(255,255,255,.45)}
+.guide .chev{color:rgba(255,255,255,.35);font-size:22px;line-height:1}
+.guide:active{background:rgba(255,255,255,.05)}
 .privbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:11px;background:var(--gold-hi);color:#000;font-size:15px;font-weight:700;text-decoration:none}
 .privbtn.sec{margin-top:10px;background:transparent;color:var(--gold-hi);border:1.5px solid rgba(242,209,89,.55)}
 .adwrap{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -1424,6 +1431,11 @@ function sheetHTML() {
           <div class="srow"><div class="g"><div class="nm">Shoe Size</div><div class="ds">${settings.decks} decks · reshuffles below 52 cards</div></div>
             <select id="set-decks" aria-label="Shoe size">${[1, 2, 4, 6, 8].map(n => `<option value="${n}" ${n === settings.decks ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
         </div>
+        <div class="sect">GUIDES</div><div class="group guidegrp">
+          <a class="guide" href="perfect-pairs.html"><span class="gi" style="--c:var(--orange)">PP</span><span class="g"><span class="nm">Perfect Pairs guide</span><span class="ds">Payouts, exact odds and the Lucky Pair</span></span><span class="chev">›</span></a>
+          <a class="guide" href="21-plus-3.html"><span class="gi" style="--c:var(--cyan)">21+3</span><span class="g"><span class="nm">21+3 guide</span><span class="ds">Every hand, its odds and payouts</span></span><span class="chev">›</span></a>
+          <a class="guide" href="basic-strategy.html"><span class="gi" style="--c:#33bf59;font-size:22px">♠</span><span class="g"><span class="nm">Basic strategy chart</span><span class="ds">When to hit, stand, double and split</span></span><span class="chev">›</span></a>
+        </div>
         <div class="sect">HOW TO PLAY</div><button class="privbtn sec" data-act="show-intro" style="margin:0 0 10px">Show the quick guide again</button><div class="group">
           ${how('var(--yellow)', '$', 'Place Your Bet', 'Tap a chip to select it, then tap the bet circle or drag chips directly onto it. Add PP or 21+3 side bets in the boxes below.')}
           ${how('#4d99ff', '▤', 'The Deal', 'Tap DEAL. You and the dealer each receive 2 cards. Your cards are face up; the dealer has one face up, one face down.')}
@@ -1577,7 +1589,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
