@@ -1205,7 +1205,7 @@ function handMeta(hand, showValue, active, result) {
   let s = '';
   if (showValue && hand.cards.length) {
     const v = bestValue(hand), bust = isBust(hand);
-    s += `<div class="valpill${active ? ' active' : ''}"><span class="v${bust ? ' bust' : ''}">${v}</span>${isSoft(hand) && !bust ? '<span class="soft">soft</span>' : ''}${isBlackjack(hand) ? '<span class="bj">BJ!</span>' : ''}</div>`;
+    s += `<div class="valpill${active ? ' active' : ''}"><span class="v${bust ? ' bust' : ''}">${v}</span>${isSoft(hand) && !bust && v < 21 ? '<span class="soft">soft</span>' : ''}${isBlackjack(hand) ? '<span class="bj">BJ!</span>' : ''}</div>`;
   }
   if (result) s += `<div class="badge ${result}">${RESULT_TEXT[result]}</div>`;
   return s;
@@ -1589,7 +1589,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.1.2';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
