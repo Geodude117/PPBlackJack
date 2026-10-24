@@ -320,6 +320,7 @@ body:not([data-phase=betting]) .tray,body:not([data-phase=betting]) .bonus{displ
 .seo details{border-top:1px solid rgba(255,255,255,.08);padding:10px 0}
 .seo summary{cursor:pointer;font-weight:700;color:#fff}
 .seo details p{margin:8px 0 0}
+.seo ul.guides a{color:var(--gold-hi)}
 .sitefoot{margin-top:10px;text-align:center;font-size:11px;color:rgba(255,255,255,.4)}
 .sitefoot a{color:rgba(242,209,89,.75)}
 .privbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:11px;background:var(--gold-hi);color:#000;font-size:15px;font-weight:700;text-decoration:none}
@@ -507,7 +508,14 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
     </ul>
 
     <h2>Basic strategy hints</h2>
-    <p>Learning blackjack strategy? Switch on <strong>Strategy Hints</strong> in Settings and the game shows the basic strategy play for every hand, such as "always split Aces and 8s" or "double on 11", and warns you before you make a costly mistake, like hitting a hard 17.</p>
+    <p>Learning blackjack strategy? See the full <a href="basic-strategy.html">basic strategy chart</a>, or switch on <strong>Strategy Hints</strong> in Settings and the game shows the basic strategy play for every hand, such as "always split Aces and 8s" or "double on 11", and warns you before you make a costly mistake, like hitting a hard 17.</p>
+
+    <h2>Guides</h2>
+    <ul class="guides">
+      <li><a href="perfect-pairs.html"><strong>Perfect Pairs guide</strong></a>: payouts, exact odds and the Lucky Pair jackpot</li>
+      <li><a href="21-plus-3.html"><strong>21+3 guide</strong></a>: every hand, its odds and payouts</li>
+      <li><a href="basic-strategy.html"><strong>Basic strategy chart</strong></a>: when to hit, stand, double and split</li>
+    </ul>
 
     <h2>Frequently asked questions</h2>
     <details><summary>Is Perfect Pair Blackjack free?</summary><p>Yes. It's completely free to play. You play with chips that have no cash value, and if you run out you can get more by watching a short ad or with a free top-up.</p></details>
@@ -516,7 +524,7 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
     <details><summary>What are the odds of a Perfect Pair?</summary><p>With a six-deck shoe, about 7% of starting hands are a pair of some kind, and about 1.6% (roughly 1 in 60) are a perfect pair of identical cards. That's why a perfect pair pays 30:1.</p></details>
     <details><summary>Do I need to download anything?</summary><p>No. The game runs entirely in your web browser, with nothing to install and no account to create. Your chip balance and settings are saved in your browser, so they're still there when you come back.</p></details>
   </article>
-  <footer class="layer sitefoot">Play money only · <a href="privacy.html">Privacy Policy</a></footer>
+  <footer class="layer sitefoot">Play money only · <a href="perfect-pairs.html">Perfect Pairs</a> · <a href="21-plus-3.html">21+3</a> · <a href="basic-strategy.html">Strategy</a> · <a href="privacy.html">Privacy</a></footer>
 </div>
 <div class="rotate-hint" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Turn your phone upright<small>Perfect Pair Blackjack is made for portrait</small></div>
 <div id="overlays"></div>
@@ -759,10 +767,11 @@ function strategyHint() {
       case 3: return (dealer >= 2 && dealer <= 7) ? G(`Split — 3s vs ${dealer}`) : G(`Hit — 3s vs ${dS}`);
       case 2: return (dealer >= 2 && dealer <= 7) ? G(`Split — 2s vs ${dealer}`) : G(`Hit — 2s vs ${dS}`);
       case 10: case 11: case 12: case 13: return G('Stand — never split 10-value cards');
-      case 5: return G('Double — never split 5s');
+      case 5: return dealer <= 9 ? G('Double — never split 5s') : G(`Hit — never split 5s (vs ${dS})`);
     }
   }
   if (soft) {
+    if (total === 19 && dealer === 6 && canDouble(hand)) return G('Double/Stand — soft 19 vs 6', 'caution');
     if (total >= 19) return G(`Stand — soft ${total}`);
     if (total === 18) {
       if (dealer <= 6) return G(`Double/Stand — soft 18 vs ${dealer}`, 'caution');
@@ -779,7 +788,7 @@ function strategyHint() {
   if (total >= 17) return G(`Stand — never hit hard ${total}+`);
   if (total >= 13) return weak ? G(`Stand — dealer may bust (${dealer} up)`) : G(`Hit — dealer strong (${dS} up)`, 'caution');
   if (total === 12) return (dealer >= 4 && dealer <= 6) ? G(`Stand — dealer may bust (${dealer} up)`) : G(`Hit — hard 12 vs ${dS}`);
-  if (total === 11) { if (canDouble(hand) && dealer <= 10) return G('Double — great spot!'); return G(dealer <= 10 ? 'Hit — hard 11' : 'Hit — hard 11 vs Ace'); }
+  if (total === 11) { if (canDouble(hand)) return G(dealer <= 10 ? 'Double — great spot!' : 'Double — hard 11 vs Ace'); return G('Hit — hard 11'); }
   if (total === 10) {
     if (canDouble(hand) && dealer <= 9) return G(`Double — hard 10 vs ${dealer}`);
     return dealer <= 9 ? G('Hit — hard 10') : G(`Hit — hard 10 vs ${dS}`, 'caution');
@@ -1568,7 +1577,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.1.0';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
