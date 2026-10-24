@@ -1413,7 +1413,7 @@ function sheetHTML() {
           <a class="privbtn" href="privacy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke-linecap="round"/></svg>View Privacy Policy</a>
           <button class="privbtn sec" data-act="cookie-settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zM8 10.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 .5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>Cookie &amp; Ad Settings</button></div>
         </div>
-        <div class="sect">ABOUT</div><div class="group"><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">1.0 web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div></div>`);
+        <div class="sect">ABOUT</div><div class="group"><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">${APP_VERSION} web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div></div>`);
     }
     case 'store': {
       const broke = S.balance + totalBet() < 25;
@@ -1551,14 +1551,19 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
+const APP_VERSION = '1.0.1';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
   const vw = document.documentElement.clientWidth;
   const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-  let z = Math.min(vw / DESIGN_W, vh / DESIGN_H);
-  z = Math.max(MIN_Z, Math.min(MAX_Z, z));
-  if (vw < 500) z = Math.min(z, vw / 360);            // never wider than a phone screen
+  let z;
+  if (vw < 500) {
+    // phones: fill the width at full size; the page scrolls to reach the bottom of the panel and the guide
+    z = Math.max(0.9, Math.min(1.2, vw / 372));
+  } else {
+    z = Math.max(MIN_Z, Math.min(MAX_Z, Math.min(vw / DESIGN_W, vh / DESIGN_H)));
+  }
   z = Math.round(z * 1000) / 1000;
   app.style.zoom = z;
   app.style.minHeight = (vh / z) + 'px';
