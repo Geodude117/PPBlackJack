@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ppblackjack.co.uk/sitemap.xml
