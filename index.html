@@ -532,7 +532,7 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
     <details><summary>What are the odds of a Perfect Pair?</summary><p>With a six-deck shoe, about 7% of starting hands are a pair of some kind, and about 1.6% (roughly 1 in 60) are a perfect pair of identical cards. That's why a perfect pair pays 30:1.</p></details>
     <details><summary>Do I need to download anything?</summary><p>No. The game runs entirely in your web browser, with nothing to install and no account to create. Your chip balance and settings are saved in your browser, so they're still there when you come back.</p></details>
   </article>
-  <footer class="layer sitefoot">Play money only · <a href="perfect-pairs.html">Perfect Pairs</a> · <a href="21-plus-3.html">21+3</a> · <a href="basic-strategy.html">Strategy</a> · <a href="privacy.html">Privacy</a></footer>
+  <footer class="layer sitefoot">Play money only · <a href="perfect-pairs.html">Perfect Pairs</a> · <a href="21-plus-3.html">21+3</a> · <a href="basic-strategy.html">Strategy</a> · <a href="tech-stack.html">How it’s built</a> · <a href="privacy.html">Privacy</a></footer>
 </div>
 <div class="rotate-hint" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Turn your phone upright<small>Perfect Pair Blackjack is made for portrait</small></div>
 <div id="overlays"></div>
@@ -1615,7 +1615,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.1.4';
+const APP_VERSION = '1.1.5';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
