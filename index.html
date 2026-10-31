@@ -520,9 +520,13 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
 
     <h2>Guides</h2>
     <ul class="guides">
+      <li><a href="blackjack-rules.html"><strong>How to play blackjack</strong></a>: card values, how a round works and payouts</li>
       <li><a href="perfect-pairs.html"><strong>Perfect Pairs guide</strong></a>: payouts, exact odds and the Lucky Pair jackpot</li>
       <li><a href="21-plus-3.html"><strong>21+3 guide</strong></a>: every hand, its odds and payouts</li>
       <li><a href="basic-strategy.html"><strong>Basic strategy chart</strong></a>: when to hit, stand, double and split</li>
+      <li><a href="insurance.html"><strong>Should you take insurance?</strong></a>: the maths behind insurance and even money</li>
+      <li><a href="side-bets-compared.html"><strong>Side bets compared</strong></a>: Perfect Pairs vs 21+3 vs insurance</li>
+      <li><a href="odds-calculator.html"><strong>Odds calculator</strong></a>: exact side bet odds and house edge for 1 to 8 decks</li>
     </ul>
 
     <h2>Frequently asked questions</h2>
@@ -532,7 +536,7 @@ select{background:transparent;color:var(--yellow);border:0;font-size:15px;font-w
     <details><summary>What are the odds of a Perfect Pair?</summary><p>With a six-deck shoe, about 7% of starting hands are a pair of some kind, and about 1.6% (roughly 1 in 60) are a perfect pair of identical cards. That's why a perfect pair pays 30:1.</p></details>
     <details><summary>Do I need to download anything?</summary><p>No. The game runs entirely in your web browser, with nothing to install and no account to create. Your chip balance and settings are saved in your browser, so they're still there when you come back.</p></details>
   </article>
-  <footer class="layer sitefoot">Play money only · <a href="perfect-pairs.html">Perfect Pairs</a> · <a href="21-plus-3.html">21+3</a> · <a href="basic-strategy.html">Strategy</a> · <a href="tech-stack.html">How it’s built</a> · <a href="privacy.html">Privacy</a></footer>
+  <footer class="layer sitefoot">Play money only · <a href="blackjack-rules.html">Rules</a> · <a href="perfect-pairs.html">Perfect Pairs</a> · <a href="21-plus-3.html">21+3</a> · <a href="basic-strategy.html">Strategy</a> · <a href="odds-calculator.html">Odds</a> · <a href="insurance.html">Insurance</a> · <a href="side-bets-compared.html">Side bets</a> · <a href="about.html">About &amp; contact</a> · <a href="changelog.html">What’s new</a> · <a href="tech-stack.html">How it’s built</a> · <a href="privacy.html">Privacy</a></footer>
 </div>
 <div class="rotate-hint" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Turn your phone upright<small>Perfect Pair Blackjack is made for portrait</small></div>
 <div id="overlays"></div>
@@ -1458,9 +1462,11 @@ function sheetHTML() {
             <select id="set-decks" aria-label="Shoe size">${[1, 2, 4, 6, 8].map(n => `<option value="${n}" ${n === settings.decks ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
         </div>
         <div class="sect">GUIDES</div><div class="group guidegrp">
+          <a class="guide" href="blackjack-rules.html"><span class="gi" style="--c:#fff">21</span><span class="g"><span class="nm">How to play</span><span class="ds">Rules, card values and payouts</span></span><span class="chev">›</span></a>
           <a class="guide" href="perfect-pairs.html"><span class="gi" style="--c:var(--orange)">PP</span><span class="g"><span class="nm">Perfect Pairs guide</span><span class="ds">Payouts, exact odds and the Lucky Pair</span></span><span class="chev">›</span></a>
           <a class="guide" href="21-plus-3.html"><span class="gi" style="--c:var(--cyan)">21+3</span><span class="g"><span class="nm">21+3 guide</span><span class="ds">Every hand, its odds and payouts</span></span><span class="chev">›</span></a>
           <a class="guide" href="basic-strategy.html"><span class="gi" style="--c:#33bf59;font-size:22px">♠</span><span class="g"><span class="nm">Basic strategy chart</span><span class="ds">When to hit, stand, double and split</span></span><span class="chev">›</span></a>
+          <a class="guide" href="odds-calculator.html"><span class="gi" style="--c:var(--gold-hi);font-size:18px">%</span><span class="g"><span class="nm">Odds calculator</span><span class="ds">Side bet odds for 1–8 decks</span></span><span class="chev">›</span></a>
         </div>
         <div class="sect">HOW TO PLAY</div><button class="privbtn sec" data-act="show-intro" style="margin:0 0 10px">Show the quick guide again</button><div class="group">
           ${how('var(--yellow)', '$', 'Place Your Bet', 'Tap a chip to select it, then tap the bet circle or drag chips directly onto it. Add PP or 21+3 side bets in the boxes below.')}
@@ -1477,7 +1483,9 @@ function sheetHTML() {
           <a class="privbtn" href="privacy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke-linecap="round"/></svg>View Privacy Policy</a>
           <button class="privbtn sec" data-act="cookie-settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zM8 10.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 .5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>Cookie &amp; Ad Settings</button></div>
         </div>
-        <div class="sect">ABOUT</div><div class="group"><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">${APP_VERSION} web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div></div>`);
+        <div class="sect">ABOUT</div><div class="group">
+          <a class="guide" href="changelog.html"><span class="g"><span class="nm">What’s new</span><span class="ds">Every update, newest first</span></span><span class="chev">›</span></a>
+          <a class="guide" href="about.html"><span class="g"><span class="nm">About &amp; contact</span><span class="ds">Report a bug or suggest a feature</span></span><span class="chev">›</span></a><div class="srow"><div class="g nm">Version</div><span style="color:rgba(255,255,255,.45)">${APP_VERSION} web</span></div><div class="srow"><div class="g nm">App</div><span style="color:rgba(255,255,255,.45);font-size:13px">Perfect Pair Blackjack</span></div></div>`);
     }
     case 'store': {
       const broke = S.balance + totalBet() < 25;
@@ -1615,7 +1623,7 @@ function attachDrag(slot) {
 /* fit to screen: the table is designed at 390×852 (an iPhone in portrait) and scaled to whatever
    screen it's on, so the whole game fits without scrolling. Phones fill the width; tablets and
    laptops get a bigger table. The ad and footer sit just below the fold. */
-const APP_VERSION = '1.1.5';
+const APP_VERSION = '1.2.0';
 const DESIGN_W = 390, DESIGN_H = 852, MIN_Z = 0.78, MAX_Z = 1.45;
 function fitToScreen() {
   const app = $('app'), cs = getComputedStyle(document.documentElement);
